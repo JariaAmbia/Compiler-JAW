@@ -1,16 +1,19 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "src/parser/symbol_table.h"
 int yylex(void);
 void yyerror(const char *s);
 %}
+%union{
+    char *str;
+}
 
 /* Tokens */
 %token INT FLOAT BOOL
 %token IF ELSE WHILE PRINT
 %token TRUE FALSE
-%token ID
+%token <str> ID
 %token NUMBER
 %token EQ NE LE GE
 %token AND OR NOT
@@ -47,16 +50,19 @@ statement:
 declaration:
       INT ID ';'
       {
+           insertSymbol($2, TYPE_INT);
           printf("Declaration Found\n");
       }
 
     | FLOAT ID ';'
-      {
+      {  
+          insertSymbol($2, TYPE_FLOAT);
           printf("Declaration Found\n");
       }
 
     | BOOL ID ';'
       {
+          insertSymbol($2, TYPE_BOOL);
           printf("Declaration Found\n");
       }
 
@@ -78,7 +84,16 @@ declaration:
 
 assignment:
       ID '=' expr ';'
-        { printf("Assignment Found\n"); }
+      {
+          if(searchSymbol($1) == -1)
+          {
+              printf("Semantic Error: Variable '%s' not declared.\n", $1);
+          }
+          else
+          {
+              printf("Assignment Found\n");
+          }
+      }
     ;
 
 if_statement:
@@ -134,9 +149,9 @@ void yyerror(const char *s)
 int main()
 {
     printf("Parsing Started...\n");
-
+    initSymbolTable();
     yyparse();
-
+    printSymbolTable();
     printf("Parsing Finished.\n");
 
     return 0;

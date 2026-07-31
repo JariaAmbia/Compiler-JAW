@@ -1,8 +1,9 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include<string.h>
 
-#include "../parser/parser.tab.h"
+#include "parser.tab.h"
 
 int line = 1;
 extern FILE *yyin;
@@ -40,7 +41,13 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 
 
 
-{ID}            { return ID; }
+{ID} {
+    printf("LEXER ID = %s\n", yytext);
+    yylval.str = strdup(yytext);
+    return ID;
+    
+    
+}
 
 
 
