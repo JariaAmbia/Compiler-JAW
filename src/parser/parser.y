@@ -1,24 +1,48 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "src/parser/symbol_table.h"
-int yylex(void);
+#include <string.h>
+
+#include "symbol_table.h"
+#include "../ast/ast.h"
+#include "../../tac.h"
+
+extern int yylex();
+extern int line;
+
 void yyerror(const char *s);
+
+ASTNode *root = NULL;
 %}
-%union{
-    char *str;
+
+%code requires {
+#include "../ast/ast.h"
 }
 
-/* Tokens */
+%union{
+    ASTNode *node;
+    char *str;
+    int value;
+}
+
 %token INT FLOAT BOOL
 %token IF ELSE WHILE PRINT
 %token TRUE FALSE
+
 %token <str> ID
-%token NUMBER
+%token <str> NUMBER
+
 %token EQ NE LE GE
 %token AND OR NOT
 
-/* Operator precedence */
+%type <node> program
+%type <node> statements
+%type <node> statement
+%type <node> declaration
+%type <node> assignment
+%type <node> expr
+%type <node> print_statement
+
 %left OR
 %left AND
 %left EQ NE
@@ -29,130 +53,215 @@ void yyerror(const char *s);
 
 %%
 
-program:
-      statements
-        { printf("Program Parsed Successfully\n"); }
-      ;
+program
+    : statements
+    {
+        root = $1;
 
-statements:
-      statements statement
+        printf("\n========== ABSTRACT SYNTAX TREE ==========\n");
+        printAST(root, 0);
+
+        printf("\n========== THREE ADDRESS CODE ==========\n");
+        generateASTTAC(root);
+    }
+;
+statements
+    : statements statement
+    {
+        $$ = createNode("Program");
+
+        addChild($$, $1);
+        addChild($$, $2);
+    }
+
     | statement
-    ;
+    {
+        $$ = createNode("Program");
 
-statement:
-      declaration
+        addChild($$, $1);
+    }
+;
+statement
+    : declaration
+    {
+        $$ = $1;
+    }
+
     | assignment
-    | if_statement
-    | while_statement
-    | print_statement
-    ;
+    {
+        $$ = $1;
+    }
 
-declaration:
-      INT ID ';'
-      {
-           insertSymbol($2, TYPE_INT);
-          printf("Declaration Found\n");
-      }
+    | print_statement
+    {
+        $$ = $1;
+    }
+;
+
+
+declaration
+    : INT ID ';'
+    {
+        insertSymbol($2, TYPE_INT);
+
+        $$ = createNode("Declaration");
+
+        addChild($$, createNode("int"));
+        addChild($$, createNode($2));
+    }
 
     | FLOAT ID ';'
-      {  
-          insertSymbol($2, TYPE_FLOAT);
-          printf("Declaration Found\n");
-      }
+    {
+        insertSymbol($2, TYPE_FLOAT);
+
+        $$ = createNode("Declaration");
+
+        addChild($$, createNode("float"));
+        addChild($$, createNode($2));
+    }
 
     | BOOL ID ';'
-      {
-          insertSymbol($2, TYPE_BOOL);
-          printf("Declaration Found\n");
-      }
+    {
+        insertSymbol($2, TYPE_BOOL);
 
-    | INT ID '=' expr ';'
-      {
-          printf("Initialized Declaration Found\n");
-      }
+        $$ = createNode("Declaration");
 
-    | FLOAT ID '=' expr ';'
-      {
-          printf("Initialized Declaration Found\n");
-      }
+        addChild($$, createNode("bool"));
+        addChild($$, createNode($2));
+    }
+;
+assignment
+    : ID '=' expr ';'
+    {
+        $$ = createNode("Assignment");
 
-    | BOOL ID '=' expr ';'
-      {
-          printf("Initialized Declaration Found\n");
-      }
-    ;
+        addChild($$, createNode($1));
+        addChild($$, $3);
 
-assignment:
-      ID '=' expr ';'
-      {
-          if(searchSymbol($1) == -1)
-          {
-              printf("Semantic Error: Variable '%s' not declared.\n", $1);
-          }
-          else
-          {
-              printf("Assignment Found\n");
-          }
-      }
-    ;
+        generateTAC("=", $3->name, "", $1);
+    }
+;
 
-if_statement:
-      IF '(' expr ')' '{' statements '}'
-      {
-          printf("If Statement Found\n");
-      }
-    ;
+expr
+    : NUMBER
+    {
+        $$ = createNode($1);
+    }
 
-while_statement:
-      WHILE '(' expr ')' '{' statements '}'
-      {
-          printf("While Statement Found\n");
-      }
-    ;
+    | ID
+    {
+        $$ = createNode($1);
+    }
 
-print_statement:
-      PRINT '(' expr ')' ';'
-        { printf("Print Statement Found\n"); }
-    ;
-expr:
-      expr '+' expr
+    | expr '+' expr
+    {
+        $$ = createNode("+");
+
+        addChild($$, $1);
+        addChild($$, $3);
+
+        char *temp = newTemp();
+
+        generateTAC("+",
+                    $1->name,
+                    $3->name,
+                    temp);
+
+        strcpy($$->name, temp);
+
+        free(temp);
+    }
+
     | expr '-' expr
+    {
+        $$ = createNode("-");
+
+        addChild($$, $1);
+        addChild($$, $3);
+
+        char *temp = newTemp();
+
+        generateTAC("-",
+                    $1->name,
+                    $3->name,
+                    temp);
+
+        strcpy($$->name, temp);
+
+        free(temp);
+    }
+
     | expr '*' expr
+    {
+        $$ = createNode("*");
+
+        addChild($$, $1);
+        addChild($$, $3);
+
+        char *temp = newTemp();
+
+        generateTAC("*",
+                    $1->name,
+                    $3->name,
+                    temp);
+
+        strcpy($$->name, temp);
+
+        free(temp);
+    }
+
     | expr '/' expr
+    {
+        $$ = createNode("/");
 
-    | expr '<' expr
-    | expr '>' expr
-    | expr LE expr
-    | expr GE expr
-    | expr EQ expr
-    | expr NE expr
+        addChild($$, $1);
+        addChild($$, $3);
 
-    | expr AND expr
-    | expr OR expr
-    | NOT expr
+        char *temp = newTemp();
+
+        generateTAC("/",
+                    $1->name,
+                    $3->name,
+                    temp);
+
+        strcpy($$->name, temp);
+
+        free(temp);
+    }
 
     | '(' expr ')'
+    {
+        $$ = $2;
+    }
+;
+/* Print Statement */
 
-    | NUMBER
-    | ID
-    | TRUE
-    | FALSE
-    ;
+print_statement
+    : PRINT '(' ID ')' ';'
+    {
+        ASTNode *idNode = createNode($3);
+
+        $$ = createNode("Print");
+
+        addChild($$, idNode);
+
+        generatePrintTAC(idNode);
+    }
+;
 
 %%
-
+ 
 void yyerror(const char *s)
 {
-    fprintf(stderr, "Syntax Error: %s\n", s);
+    fprintf(stderr,
+            "Syntax Error: %s at line %d\n",
+            s,
+            line);
 }
 
 int main()
 {
-    printf("Parsing Started...\n");
-    initSymbolTable();
+    printf("Starting Compiler...\n");
     yyparse();
-    printSymbolTable();
-    printf("Parsing Finished.\n");
-
     return 0;
 }
