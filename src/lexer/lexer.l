@@ -8,7 +8,6 @@
 int line = 1;
 extern FILE *yyin;
 %}
-
 %option noyywrap
 
 DIGIT       [0-9]
@@ -18,6 +17,8 @@ INT         {DIGIT}+
 FLOAT       {DIGIT}+"."{DIGIT}+
 
 %%
+
+
 
 "int"           { return INT; }
 "float"         { return FLOAT; }
@@ -32,19 +33,27 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 "true"          { return TRUE; }
 "false"         { return FALSE; }
 
-{FLOAT}         { return NUMBER; }
-{INT}           { return NUMBER; }
+
+
+
+{FLOAT}         { yylval.num = atof(yytext); return NUMBER; }
+{INT}           { yylval.num = atof(yytext); return NUMBER; }
+
+
 
 {ID} {
-    printf("LEXER ID = %s\n", yytext);
     yylval.str = strdup(yytext);
     return ID;
 }
+
+
 
 "+"             { return '+'; }
 "-"             { return '-'; }
 "*"             { return '*'; }
 "/"             { return '/'; }
+
+
 
 "="             { return '='; }
 
@@ -60,18 +69,25 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 "<"             { return '<'; }
 ">"             { return '>'; }
 
+
 ";"             { return ';'; }
 "("             { return '('; }
 ")"             { return ')'; }
 "{"             { return '{'; }
 "}"             { return '}'; }
 
+
+
+
 [ \t\r]+        { }
 
 \n              { line++; }
 
+
+
 . {
     printf("Lexical Error (Line %d): %s\n", line, yytext);
 }
+
 
 %%

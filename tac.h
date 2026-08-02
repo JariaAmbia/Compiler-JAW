@@ -1,23 +1,37 @@
 #ifndef TAC_H
 #define TAC_H
 
-#include "src/ast/ast.h"
+#include "ast/ast.h"
 
-/* Generate temporary variable */
-char *newTemp();
+/*
+ * A single Three-Address-Code instruction, e.g.:
+ *
+ *   result = arg1 op arg2      (op is "+", "-", "*", "/", "<", "==", ...)
+ *   result = arg1              (op is "=")
+ *   result = ! arg1            (op is "!"  -- unary)
+ *   ifFalse arg1 goto result   (op is "ifFalse", result holds the label)
+ *   goto result                (op is "goto",    result holds the label)
+ *   result:                    (op is "label",   result holds the label)
+ *   print arg1                 (op is "print")
+ */
+typedef struct TACInstr {
+    char *op;
+    char *arg1;
+    char *arg2;
+    char *result;
+    struct TACInstr *next;
+} TACInstr;
 
-/* Generate Three Address Code */
-void generateTAC(
-    char *op,
-    char *arg1,
-    char *arg2,
-    char *result
-);
+/* Walks the AST and builds the internal TAC instruction list. */
+void generateTAC(ASTNode *root);
 
-/* Generate TAC for print statement */
-void generatePrintTAC(ASTNode *node);
+/* Prints the generated TAC instructions in order. */
+void printTAC(void);
 
-/* Generate TAC from AST (optional) */
-void generateASTTAC(ASTNode *root);
+/* Frees the internal TAC instruction list. */
+void freeTACList(void);
 
-#endif
+/* Returns the head of the generated instruction list (NULL if none yet). */
+TACInstr *getTACList(void);
+
+#endif /* TAC_H */
