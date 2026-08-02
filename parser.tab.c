@@ -67,11 +67,11 @@
 
 
 /* First part of user prologue.  */
-#line 1 "parser.y"
+#line 1 "src/parser/parser.y"
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "src/parser/symbol_table.h"
 int yylex(void);
 void yyerror(const char *s);
 
@@ -531,12 +531,12 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,    30,    30,    35,    36,    40,    41,    42,    43,    44,
-      48,    53,    58,    63,    68,    73,    80,    85,    92,    99,
-     103,   104,   105,   106,   108,   109,   110,   111,   112,   113,
-     115,   116,   117,   119,   121,   122,   123,   124
+       0,    33,    33,    38,    39,    43,    44,    45,    46,    47,
+      51,    57,    63,    69,    74,    79,    86,   100,   107,   114,
+     118,   119,   120,   121,   123,   124,   125,   126,   127,   128,
+     130,   131,   132,   134,   136,   137,   138,   139
 };
 #endif
 
@@ -1173,89 +1173,101 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statements  */
-#line 31 "parser.y"
+#line 34 "src/parser/parser.y"
         { printf("Program Parsed Successfully\n"); }
 #line 1179 "parser.tab.c"
     break;
 
   case 10: /* declaration: INT ID ';'  */
-#line 49 "parser.y"
+#line 52 "src/parser/parser.y"
       {
+           insertSymbol((yyvsp[-1].str), TYPE_INT);
           printf("Declaration Found\n");
       }
-#line 1187 "parser.tab.c"
+#line 1188 "parser.tab.c"
     break;
 
   case 11: /* declaration: FLOAT ID ';'  */
-#line 54 "parser.y"
-      {
+#line 58 "src/parser/parser.y"
+      {  
+          insertSymbol((yyvsp[-1].str), TYPE_FLOAT);
           printf("Declaration Found\n");
       }
-#line 1195 "parser.tab.c"
+#line 1197 "parser.tab.c"
     break;
 
   case 12: /* declaration: BOOL ID ';'  */
-#line 59 "parser.y"
+#line 64 "src/parser/parser.y"
       {
+          insertSymbol((yyvsp[-1].str), TYPE_BOOL);
           printf("Declaration Found\n");
       }
-#line 1203 "parser.tab.c"
+#line 1206 "parser.tab.c"
     break;
 
   case 13: /* declaration: INT ID '=' expr ';'  */
-#line 64 "parser.y"
+#line 70 "src/parser/parser.y"
       {
           printf("Initialized Declaration Found\n");
       }
-#line 1211 "parser.tab.c"
+#line 1214 "parser.tab.c"
     break;
 
   case 14: /* declaration: FLOAT ID '=' expr ';'  */
-#line 69 "parser.y"
+#line 75 "src/parser/parser.y"
       {
           printf("Initialized Declaration Found\n");
       }
-#line 1219 "parser.tab.c"
+#line 1222 "parser.tab.c"
     break;
 
   case 15: /* declaration: BOOL ID '=' expr ';'  */
-#line 74 "parser.y"
+#line 80 "src/parser/parser.y"
       {
           printf("Initialized Declaration Found\n");
       }
-#line 1227 "parser.tab.c"
+#line 1230 "parser.tab.c"
     break;
 
   case 16: /* assignment: ID '=' expr ';'  */
-#line 81 "parser.y"
-        { printf("Assignment Found\n"); }
-#line 1233 "parser.tab.c"
+#line 87 "src/parser/parser.y"
+      {
+          if(searchSymbol((yyvsp[-3].str)) == -1)
+          {
+              printf("Semantic Error: Variable '%s' not declared.\n", (yyvsp[-3].str));
+          }
+          else
+          {
+              printf("Assignment Found\n");
+          }
+      }
+#line 1245 "parser.tab.c"
     break;
 
   case 17: /* if_statement: IF '(' expr ')' '{' statements '}'  */
-#line 86 "parser.y"
+#line 101 "src/parser/parser.y"
       {
           printf("If Statement Found\n");
       }
-#line 1241 "parser.tab.c"
+#line 1253 "parser.tab.c"
     break;
 
   case 18: /* while_statement: WHILE '(' expr ')' '{' statements '}'  */
-#line 93 "parser.y"
+#line 108 "src/parser/parser.y"
       {
           printf("While Statement Found\n");
       }
-#line 1249 "parser.tab.c"
+#line 1261 "parser.tab.c"
     break;
 
   case 19: /* print_statement: PRINT '(' expr ')' ';'  */
-#line 100 "parser.y"
+#line 115 "src/parser/parser.y"
         { printf("Print Statement Found\n"); }
-#line 1255 "parser.tab.c"
+#line 1267 "parser.tab.c"
     break;
 
 
-#line 1259 "parser.tab.c"
+#line 1271 "parser.tab.c"
 
       default: break;
     }
@@ -1448,7 +1460,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 127 "parser.y"
+#line 142 "src/parser/parser.y"
 
 
 void yyerror(const char *s)
@@ -1458,11 +1470,18 @@ void yyerror(const char *s)
 
 int main()
 {
-    printf("Parsing Started...\n");
+    printf("========== COMPILER START ==========\n");
+
+    printf("\n========== LEXICAL ANALYSIS ==========\n");
+
+    initSymbolTable();
 
     yyparse();
 
-    printf("Parsing Finished.\n");
+    printf("\n========== SYMBOL TABLE ==========\n");
+    printSymbolTable();
+
+    printf("\nParsing Finished.\n");
 
     return 0;
 }

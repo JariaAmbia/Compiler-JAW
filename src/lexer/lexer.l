@@ -20,29 +20,28 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 
 
 
-"int"           { return INT; }
-"float"         { return FLOAT; }
-"bool"          { return BOOL; }
+"int"           { printf("KEYWORD: int\n"); return INT; }
+"float"         { printf("KEYWORD: float\n"); return FLOAT; }
+"bool"          { printf("KEYWORD: bool\n"); return BOOL; }
 
-"if"            { return IF; }
-"else"          { return ELSE; }
-"while"         { return WHILE; }
+"if"            { printf("KEYWORD: if\n"); return IF; }
+"else"          { printf("KEYWORD: else\n"); return ELSE; }
+"while"         { printf("KEYWORD: while\n"); return WHILE; }
 
-"print"         { return PRINT; }
+"print"         { printf("KEYWORD: print\n"); return PRINT; }
 
-"true"          { return TRUE; }
-"false"         { return FALSE; }
-
-
+"true"          { printf("BOOLEAN: true\n"); return TRUE; }
+"false"         { printf("BOOLEAN: false\n"); return FALSE; }
 
 
-{FLOAT}         { return NUMBER; }
-{INT}           { return NUMBER; }
+
+{FLOAT}         { printf("FLOAT: %s\n", yytext); return NUMBER; }
+{INT}           { printf("INTEGER: %s\n", yytext); return NUMBER; }
 
 
 
 {ID} {
-    printf("LEXER ID = %s\n", yytext);
+    printf("Identifier : %s\n", yytext);
     yylval.str = strdup(yytext);
     return ID;
     
@@ -51,33 +50,30 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 
 
 
-"+"             { return '+'; }
-"-"             { return '-'; }
-"*"             { return '*'; }
-"/"             { return '/'; }
+"+" { printf("OPERATOR: +\n"); return '+'; }
+"-" { printf("OPERATOR: -\n"); return '-'; }
+"*" { printf("OPERATOR: *\n"); return '*'; }
+"/" { printf("OPERATOR: /\n"); return '/'; }
+"=" { printf("OPERATOR: =\n"); return '='; }
 
 
 
-"="             { return '='; }
-
-"=="            { return EQ; }
-"!="            { return NE; }
-"<="            { return LE; }
-">="            { return GE; }
-
-"&&"            { return AND; }
-"||"            { return OR; }
-"!"             { return NOT; }
-
-"<"             { return '<'; }
-">"             { return '>'; }
+"==" { printf("OPERATOR: ==\n"); return EQ; }
+"!=" { printf("OPERATOR: !=\n"); return NE; }
+"<=" { printf("OPERATOR: <=\n"); return LE; }
+">=" { printf("OPERATOR: >=\n"); return GE; }
+"&&" { printf("OPERATOR: &&\n"); return AND; }
+"||" { printf("OPERATOR: ||\n"); return OR; }
+"!"  { printf("OPERATOR: !\n"); return NOT; }
+"<"  { printf("OPERATOR: <\n"); return '<'; }
+">"  { printf("OPERATOR: >\n"); return '>'; }
 
 
-";"             { return ';'; }
-"("             { return '('; }
-")"             { return ')'; }
-"{"             { return '{'; }
-"}"             { return '}'; }
+";" { printf("PUNCTUATION: ;\n"); return ';'; }
+"(" { printf("PUNCTUATION: (\n"); return '('; }
+")" { printf("PUNCTUATION: )\n"); return ')'; }
+"{" { printf("PUNCTUATION: {\n"); return '{'; }
+"}" { printf("PUNCTUATION: }\n"); return '}'; }
 
 
 

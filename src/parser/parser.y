@@ -148,11 +148,18 @@ void yyerror(const char *s)
 
 int main()
 {
-    printf("Parsing Started...\n");
+    printf("========== COMPILER START ==========\n");
+
+    printf("\n========== LEXICAL ANALYSIS ==========\n");
+
     initSymbolTable();
+
     yyparse();
+
+    printf("\n========== SYMBOL TABLE ==========\n");
     printSymbolTable();
-    printf("Parsing Finished.\n");
+
+    printf("\nParsing Finished.\n");
 
     return 0;
 }
