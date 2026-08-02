@@ -71,11 +71,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "src/parser/symbol_table.h"
+#include "../ast/ast.h"
+#include "../../tac.h"
+
 int yylex(void);
 void yyerror(const char *s);
 
-#line 79 "parser.tab.c"
+extern char *yytext;
+
+ASTNode *root;
+
+
+#line 88 "src/parser/parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -531,12 +540,12 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    33,    33,    38,    39,    43,    44,    45,    46,    47,
-      51,    57,    63,    69,    74,    79,    86,   100,   107,   114,
-     118,   119,   120,   121,   123,   124,   125,   126,   127,   128,
-     130,   131,   132,   134,   136,   137,   138,   139
+       0,    52,    52,    69,    81,    87,    88,    89,    90,    91,
+      95,   109,   123,   137,   151,   165,   181,   200,   208,   216,
+     223,   228,   233,   238,   244,   249,   254,   259,   264,   269,
+     275,   280,   286,   292,   298,   306,   316,   322
 };
 #endif
 
@@ -1173,101 +1182,377 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statements  */
-#line 34 "src/parser/parser.y"
-        { printf("Program Parsed Successfully\n"); }
-#line 1179 "parser.tab.c"
+#line 53 "src/parser/parser.y"
+      {
+          root = (yyvsp[0].node);
+
+          printf("\nSyntax Analysis Completed Successfully\n");
+
+          printf("\n========== ABSTRACT SYNTAX TREE ==========\n");
+          printAST(root, 0);
+          printf("AST Generated Successfully\n");
+
+          printf("\n========== THREE ADDRESS CODE ==========\n");
+          generateTAC(root);
+          printf("TAC Generated Successfully\n");
+      }
+#line 1200 "src/parser/parser.tab.c"
+    break;
+
+  case 3: /* statements: statements statement  */
+#line 70 "src/parser/parser.y"
+      {
+          /* Link the new statement onto the end of the list via
+             the "third" pointer, so printAST/generateTAC can walk
+             all statements in order as siblings at the same level. */
+          ASTNode *tail = (yyvsp[-1].node);
+          while(tail->third != NULL)
+              tail = tail->third;
+          tail->third = (yyvsp[0].node);
+          (yyval.node) = (yyvsp[-1].node);
+      }
+#line 1215 "src/parser/parser.tab.c"
+    break;
+
+  case 4: /* statements: statement  */
+#line 82 "src/parser/parser.y"
+      {
+          (yyval.node) = (yyvsp[0].node);
+      }
+#line 1223 "src/parser/parser.tab.c"
+    break;
+
+  case 5: /* statement: declaration  */
+#line 87 "src/parser/parser.y"
+                        { (yyval.node) = (yyvsp[0].node); }
+#line 1229 "src/parser/parser.tab.c"
+    break;
+
+  case 6: /* statement: assignment  */
+#line 88 "src/parser/parser.y"
+                         { (yyval.node) = (yyvsp[0].node); }
+#line 1235 "src/parser/parser.tab.c"
+    break;
+
+  case 7: /* statement: if_statement  */
+#line 89 "src/parser/parser.y"
+                          { (yyval.node) = (yyvsp[0].node); }
+#line 1241 "src/parser/parser.tab.c"
+    break;
+
+  case 8: /* statement: while_statement  */
+#line 90 "src/parser/parser.y"
+                          { (yyval.node) = (yyvsp[0].node); }
+#line 1247 "src/parser/parser.tab.c"
+    break;
+
+  case 9: /* statement: print_statement  */
+#line 91 "src/parser/parser.y"
+                          { (yyval.node) = (yyvsp[0].node); }
+#line 1253 "src/parser/parser.tab.c"
     break;
 
   case 10: /* declaration: INT ID ';'  */
-#line 52 "src/parser/parser.y"
+#line 96 "src/parser/parser.y"
       {
-           insertSymbol((yyvsp[-1].str), TYPE_INT);
+          if(searchSymbol((yyvsp[-1].str)) != -1)
+          {
+              printf("Semantic Error: Variable '%s' already declared.\n", (yyvsp[-1].str));
+          }
+          else
+          {
+              insertSymbol((yyvsp[-1].str), TYPE_INT);
+          }
           printf("Declaration Found\n");
+          (yyval.node) = createNode((yyvsp[-1].str));
       }
-#line 1188 "parser.tab.c"
+#line 1270 "src/parser/parser.tab.c"
     break;
 
   case 11: /* declaration: FLOAT ID ';'  */
-#line 58 "src/parser/parser.y"
-      {  
-          insertSymbol((yyvsp[-1].str), TYPE_FLOAT);
+#line 110 "src/parser/parser.y"
+      {
+          if(searchSymbol((yyvsp[-1].str)) != -1)
+          {
+              printf("Semantic Error: Variable '%s' already declared.\n", (yyvsp[-1].str));
+          }
+          else
+          {
+              insertSymbol((yyvsp[-1].str), TYPE_FLOAT);
+          }
           printf("Declaration Found\n");
+          (yyval.node) = createNode((yyvsp[-1].str));
       }
-#line 1197 "parser.tab.c"
+#line 1287 "src/parser/parser.tab.c"
     break;
 
   case 12: /* declaration: BOOL ID ';'  */
-#line 64 "src/parser/parser.y"
+#line 124 "src/parser/parser.y"
       {
-          insertSymbol((yyvsp[-1].str), TYPE_BOOL);
+          if(searchSymbol((yyvsp[-1].str)) != -1)
+          {
+              printf("Semantic Error: Variable '%s' already declared.\n", (yyvsp[-1].str));
+          }
+          else
+          {
+              insertSymbol((yyvsp[-1].str), TYPE_BOOL);
+          }
           printf("Declaration Found\n");
+          (yyval.node) = createNode((yyvsp[-1].str));
       }
-#line 1206 "parser.tab.c"
+#line 1304 "src/parser/parser.tab.c"
     break;
 
   case 13: /* declaration: INT ID '=' expr ';'  */
-#line 70 "src/parser/parser.y"
+#line 138 "src/parser/parser.y"
       {
+          if(searchSymbol((yyvsp[-3].str)) != -1)
+          {
+              printf("Semantic Error: Variable '%s' already declared.\n", (yyvsp[-3].str));
+          }
+          else
+          {
+              insertSymbol((yyvsp[-3].str), TYPE_INT);
+          }
           printf("Initialized Declaration Found\n");
+          (yyval.node) = createOperatorNode("=", createNode((yyvsp[-3].str)), (yyvsp[-1].node));
       }
-#line 1214 "parser.tab.c"
+#line 1321 "src/parser/parser.tab.c"
     break;
 
   case 14: /* declaration: FLOAT ID '=' expr ';'  */
-#line 75 "src/parser/parser.y"
+#line 152 "src/parser/parser.y"
       {
+          if(searchSymbol((yyvsp[-3].str)) != -1)
+          {
+              printf("Semantic Error: Variable '%s' already declared.\n", (yyvsp[-3].str));
+          }
+          else
+          {
+              insertSymbol((yyvsp[-3].str), TYPE_FLOAT);
+          }
           printf("Initialized Declaration Found\n");
+          (yyval.node) = createOperatorNode("=", createNode((yyvsp[-3].str)), (yyvsp[-1].node));
       }
-#line 1222 "parser.tab.c"
+#line 1338 "src/parser/parser.tab.c"
     break;
 
   case 15: /* declaration: BOOL ID '=' expr ';'  */
-#line 80 "src/parser/parser.y"
+#line 166 "src/parser/parser.y"
       {
+          if(searchSymbol((yyvsp[-3].str)) != -1)
+          {
+              printf("Semantic Error: Variable '%s' already declared.\n", (yyvsp[-3].str));
+          }
+          else
+          {
+              insertSymbol((yyvsp[-3].str), TYPE_BOOL);
+          }
           printf("Initialized Declaration Found\n");
+          (yyval.node) = createOperatorNode("=", createNode((yyvsp[-3].str)), (yyvsp[-1].node));
       }
-#line 1230 "parser.tab.c"
+#line 1355 "src/parser/parser.tab.c"
     break;
 
   case 16: /* assignment: ID '=' expr ';'  */
-#line 87 "src/parser/parser.y"
+#line 182 "src/parser/parser.y"
       {
-          if(searchSymbol((yyvsp[-3].str)) == -1)
+          if(searchSymbol((yyvsp[-3].str))==-1)
           {
-              printf("Semantic Error: Variable '%s' not declared.\n", (yyvsp[-3].str));
+              printf("Semantic Error: Variable '%s' not declared.\n",(yyvsp[-3].str));
           }
           else
           {
               printf("Assignment Found\n");
           }
+
+
+          (yyval.node) = createOperatorNode("=",
+                 createNode((yyvsp[-3].str)),
+                 (yyvsp[-1].node));
       }
-#line 1245 "parser.tab.c"
+#line 1375 "src/parser/parser.tab.c"
     break;
 
   case 17: /* if_statement: IF '(' expr ')' '{' statements '}'  */
-#line 101 "src/parser/parser.y"
+#line 201 "src/parser/parser.y"
       {
           printf("If Statement Found\n");
+          (yyval.node) = createOperatorNode("if", (yyvsp[-4].node), (yyvsp[-1].node));
       }
-#line 1253 "parser.tab.c"
+#line 1384 "src/parser/parser.tab.c"
     break;
 
   case 18: /* while_statement: WHILE '(' expr ')' '{' statements '}'  */
-#line 108 "src/parser/parser.y"
+#line 209 "src/parser/parser.y"
       {
           printf("While Statement Found\n");
+          (yyval.node) = createOperatorNode("while", (yyvsp[-4].node), (yyvsp[-1].node));
       }
-#line 1261 "parser.tab.c"
+#line 1393 "src/parser/parser.tab.c"
     break;
 
   case 19: /* print_statement: PRINT '(' expr ')' ';'  */
-#line 115 "src/parser/parser.y"
-        { printf("Print Statement Found\n"); }
-#line 1267 "parser.tab.c"
+#line 217 "src/parser/parser.y"
+        {
+            printf("Print Statement Found\n");
+            (yyval.node) = createOperatorNode("PRINT", (yyvsp[-2].node), NULL);
+        }
+#line 1402 "src/parser/parser.tab.c"
+    break;
+
+  case 20: /* expr: expr '+' expr  */
+#line 224 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("+",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1410 "src/parser/parser.tab.c"
+    break;
+
+  case 21: /* expr: expr '-' expr  */
+#line 229 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("-",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1418 "src/parser/parser.tab.c"
+    break;
+
+  case 22: /* expr: expr '*' expr  */
+#line 234 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("*",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1426 "src/parser/parser.tab.c"
+    break;
+
+  case 23: /* expr: expr '/' expr  */
+#line 239 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("/",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1434 "src/parser/parser.tab.c"
+    break;
+
+  case 24: /* expr: expr '<' expr  */
+#line 245 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("<",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1442 "src/parser/parser.tab.c"
+    break;
+
+  case 25: /* expr: expr '>' expr  */
+#line 250 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode(">",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1450 "src/parser/parser.tab.c"
+    break;
+
+  case 26: /* expr: expr LE expr  */
+#line 255 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("<=",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1458 "src/parser/parser.tab.c"
+    break;
+
+  case 27: /* expr: expr GE expr  */
+#line 260 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode(">=",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1466 "src/parser/parser.tab.c"
+    break;
+
+  case 28: /* expr: expr EQ expr  */
+#line 265 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("==",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1474 "src/parser/parser.tab.c"
+    break;
+
+  case 29: /* expr: expr NE expr  */
+#line 270 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("!=",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1482 "src/parser/parser.tab.c"
+    break;
+
+  case 30: /* expr: expr AND expr  */
+#line 276 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("&&",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1490 "src/parser/parser.tab.c"
+    break;
+
+  case 31: /* expr: expr OR expr  */
+#line 281 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("||",(yyvsp[-2].node),(yyvsp[0].node));
+      }
+#line 1498 "src/parser/parser.tab.c"
+    break;
+
+  case 32: /* expr: NOT expr  */
+#line 287 "src/parser/parser.y"
+      {
+          (yyval.node) = createOperatorNode("!",(yyvsp[0].node),NULL);
+      }
+#line 1506 "src/parser/parser.tab.c"
+    break;
+
+  case 33: /* expr: '(' expr ')'  */
+#line 293 "src/parser/parser.y"
+      {
+          (yyval.node)=(yyvsp[-1].node);
+      }
+#line 1514 "src/parser/parser.tab.c"
+    break;
+
+  case 34: /* expr: NUMBER  */
+#line 299 "src/parser/parser.y"
+      {
+          char buffer[20];
+          sprintf(buffer,"%s",yytext);
+          (yyval.node)=createNode(buffer);
+      }
+#line 1524 "src/parser/parser.tab.c"
+    break;
+
+  case 35: /* expr: ID  */
+#line 307 "src/parser/parser.y"
+      {
+          if(searchSymbol((yyvsp[0].str)) == -1)
+          {
+              printf("Semantic Error: Variable '%s' not declared.\n", (yyvsp[0].str));
+          }
+          (yyval.node)=createNode((yyvsp[0].str));
+      }
+#line 1536 "src/parser/parser.tab.c"
+    break;
+
+  case 36: /* expr: TRUE  */
+#line 317 "src/parser/parser.y"
+      {
+          (yyval.node)=createNode("true");
+      }
+#line 1544 "src/parser/parser.tab.c"
+    break;
+
+  case 37: /* expr: FALSE  */
+#line 323 "src/parser/parser.y"
+      {
+          (yyval.node)=createNode("false");
+      }
+#line 1552 "src/parser/parser.tab.c"
     break;
 
 
-#line 1271 "parser.tab.c"
+#line 1556 "src/parser/parser.tab.c"
 
       default: break;
     }
@@ -1460,7 +1745,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 142 "src/parser/parser.y"
+#line 328 "src/parser/parser.y"
 
 
 void yyerror(const char *s)

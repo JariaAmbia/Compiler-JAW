@@ -1,9 +1,9 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include<string.h>
 
-#include "../parser/parser.tab.h"
+#include "parser.tab.h"
 
 int line = 1;
 extern FILE *yyin;
@@ -35,24 +35,17 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 
 
 
-<<<<<<< HEAD
 {FLOAT}         { printf("FLOAT: %s\n", yytext); return NUMBER; }
 {INT}           { printf("INTEGER: %s\n", yytext); return NUMBER; }
-=======
-
-{FLOAT}         { yylval.num = atof(yytext); return NUMBER; }
-{INT}           { yylval.num = atof(yytext); return NUMBER; }
->>>>>>> 97e43a3ff24af010c660c1e4265084934d2f2562
 
 
 
 {ID} {
-<<<<<<< HEAD
     printf("Identifier : %s\n", yytext);
-=======
->>>>>>> 97e43a3ff24af010c660c1e4265084934d2f2562
     yylval.str = strdup(yytext);
     return ID;
+    
+    
 }
 
 
